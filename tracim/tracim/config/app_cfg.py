@@ -48,6 +48,114 @@ base_config.model = tracim.model
 base_config.DBSession = tracim.model.DBSession
 
 
+##### START OF LDAP AUTHENTICATION #####
+
+from who_ldap import (LDAPSearchAuthenticatorPlugin,
+                      LDAPAttributesPlugin, LDAPGroupsPlugin)
+
+
+base_config.use_sqlalchemy = False
+ldap_url = 'ldap://127.0.0.1:389'
+ldap_base_dn = 'ou=People,dc=team,dc=tracim,dc=fr'
+ldap_bind_dn = 'cn=admin,dc=team,dc=tracim,dc=fr'
+ldap_bind_pass = 'root'
+
+# Authenticate users by searching in LDAP
+
+ldap_auth = LDAPSearchAuthenticatorPlugin(
+    url=ldap_url, base_dn=ldap_base_dn,
+    bind_dn=ldap_bind_dn, bind_pass=ldap_bind_pass,
+    returned_id='login',
+    # the LDAP attribute that holds the user name:
+    naming_attribute='mail',
+    start_tls=False)
+
+base_config.sa_auth.authenticators = [('ldapauth', ldap_auth)]
+
+# Retrieve user metadata from LDAP
+
+ldap_user_provider = LDAPAttributesPlugin(
+    url=ldap_url, bind_dn=ldap_bind_dn, bind_pass=ldap_bind_pass,
+    name='user',
+    # map from LDAP attributes to TurboGears user attributes:
+    attributes='givenName=first_name,sn=last_name,mail=email_address',
+    filterstr='(&(objectClass=People))',
+    flatten=True, start_tls=False)
+
+# Retrieve user groups from LDAP
+
+ldap_groups_provider = LDAPGroupsPlugin(
+    url=ldap_url, base_dn=ldap_base_dn,
+    bind_dn=ldap_bind_dn, bind_pass=ldap_bind_pass,
+    filterstr='(&(objectClass=group)(member=%(dn)s))',
+    name='groups',
+    start_tls=False)
+
+base_config.sa_auth.mdproviders = [
+    ('ldapuser', ldap_user_provider),
+    ('ldapgroups', ldap_groups_provider)]
+
+
+ldap_groups_provider = LDAPGroupsPlugin(
+    url=ldap_url, base_dn=ldap_base_dn,
+    bind_dn=ldap_bind_dn, bind_pass=ldap_bind_pass,
+    filterstr='(&(objectClass=group)(member=%(dn)s))',
+    name='groups',
+    start_tls=False)
+
+base_config.sa_auth.mdproviders = [
+    ('ldapuser', ldap_user_provider),
+    ('ldapgroups', ldap_groups_provider)]
+
+from tg.configuration.auth import TGAuthMetadata
+
+class ApplicationAuthMetadata(TGAuthMetadata):
+    """Tell TurboGears how to retrieve the data for your user"""
+
+    # map from LDAP group names to TurboGears group names
+    group_map = {'public-tracim': 'administrators'}
+
+    # set of permissions for all mapped groups
+    permissions_for_groups = {'managers': {}}
+
+    def __init__(self, sa_auth):
+        logger.debug(self, 'LDAP AUTHENTICATION')
+        self.sa_auth = sa_auth
+
+    def get_user(self, identity, userid):
+        logger.debug(self, 'LDAP AUTHENTICATION - GET USER')
+        user = identity.get('user')
+        if user:
+            logger.debug(self, 'User is {} - {}'.format(userid, user))
+            name ='{first_name} {last_name}'.format(**user).strip()
+            user.update(user_name=userid, display_name=name)
+        return user
+
+    def get_groups(self, identity, userid):
+        get_group = self.group_map.get
+        return [get_group(g, g) for g in identity.get('groups', [])]
+
+    def get_permissions_for_group(self, group):
+        return self.permissions_for_groups.get(group, set())
+
+    def get_permissions(self, identity, userid):
+        permissions = set()
+        get_permissions = self.get_permissions_for_group
+        for group in self.get_groups(identity, userid):
+            permissions |= get_permissions(group)
+        return permissions
+
+
+base_config.sa_auth.authmetadata = ApplicationAuthMetadata(
+    base_config.sa_auth)
+
+
+
+##### END OF LDAP CONFIG #####
+
+
+
+
 # base_config.flash.cookie_name
 # base_config.flash.default_status -> Default message status if not specified (ok by default)
 base_config['flash.template'] = '''
@@ -72,39 +180,16 @@ base_config.sa_auth.cookie_secret = "3283411b-1904-4554-b0e1-883863b53080"
 base_config.auth_backend = 'sqlalchemy'
 
 # what is the class you want to use to search for users in the database
-base_config.sa_auth.user_class = model.User
+# base_config.sa_auth.user_class = model.User
 
 from tg.configuration.auth import TGAuthMetadata
 
 from sqlalchemy import and_
-#This tells to TurboGears how to retrieve the data for your user
-class ApplicationAuthMetadata(TGAuthMetadata):
-
-    def __init__(self, sa_auth):
-        self.sa_auth = sa_auth
-
-    def authenticate(self, environ, identity):
-        user = self.sa_auth.dbsession.query(self.sa_auth.user_class).filter(and_(
-            self.sa_auth.user_class.is_active==True,
-            self.sa_auth.user_class.email==identity['login']
-        )).first()
-
-        if user and user.validate_password(identity['password']):
-            return identity['login']
-    def get_user(self, identity, userid):
-        return self.sa_auth.dbsession.query(self.sa_auth.user_class).filter(and_(self.sa_auth.user_class.is_active==True, self.sa_auth.user_class.email==userid)).first()
-    def get_groups(self, identity, userid):
-        return [g.group_name for g in identity['user'].groups]
-    def get_permissions(self, identity, userid):
-        return [p.permission_name for p in identity['user'].permissions]
-
-base_config.sa_auth.dbsession = model.DBSession
-
-base_config.sa_auth.authmetadata = ApplicationAuthMetadata(base_config.sa_auth)
 
 # You can use a different repoze.who Authenticator if you want to
 # change the way users can login
 #base_config.sa_auth.authenticators = [('myauth', SomeAuthenticator()]
+
 
 # You can add more repoze.who metadata providers to fetch
 # user metadata.
@@ -126,10 +211,10 @@ base_config.sa_auth.post_logout_url = '/post_logout'
 
 # INFO - This is the way to specialize the resetpassword email properties
 # plug(base_config, 'resetpassword', None, mail_subject=reset_password_email_subject)
-plug(base_config, 'resetpassword', 'reset_password')
 
-replace_template(base_config, 'resetpassword.templates.index', 'tracim.templates.reset_password_index')
-replace_template(base_config, 'resetpassword.templates.change_password', 'mako:tracim.templates.reset_password_change_password')
+# plug(base_config, 'resetpassword', 'reset_password')
+# replace_template(base_config, 'resetpassword.templates.index', 'tracim.templates.reset_password_index')
+# replace_template(base_config, 'resetpassword.templates.change_password', 'mako:tracim.templates.reset_password_change_password')
 
 # Note: here are fake translatable strings that allow to translate messages for reset password email content
 duplicated_email_subject = l_('Password reset request')

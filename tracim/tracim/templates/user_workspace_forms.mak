@@ -33,6 +33,14 @@
                 <% checked = ('', 'checked')[folder.allowed_content.page] %>
                 <label><input name="can_contain_pages" type="checkbox" ${checked}> ${TIM.FA('fa-file-text-o fa-fw t-page-color')} ${_('Wiki pages')} </label>
             </div>
+            <div class="checkbox">
+                <% checked = ('', 'checked')[folder.allowed_content.task] %>
+                <label><input name="can_contain_tasks" type="checkbox" ${checked}> ${TIM.FA('fa-check-square fa-fw t-task-color')} ${_('Tasks')} </label>
+            </div>
+            <div class="checkbox">
+                <% checked = ('', 'checked')[folder.allowed_content.ticket] %>
+                <label><input name="can_contain_tickets" type="checkbox" ${checked}> ${TIM.FA('fa-ambulance fa-fw t-ticket-color')} ${_('Tickets')} </label>
+            </div>
         </div>
         <div class="modal-footer">
             <span class="pull-right t-modal-form-submit-button">
@@ -79,6 +87,29 @@
                 </div>
                 <span class="pull-right t-modal-form-submit-button">
                     <button id="${dom_id}-submit-button" type="submit" class="btn btn-small btn-success" title="${_('Create this page')}"><i class=" fa fa-check"></i> ${_('Validate')}</button>
+                </span>
+
+                <div style="clear: both;"></div>
+            </form>
+        </div>
+        <hr/>
+    </div>
+</%def>
+
+<%def name="NEW_TASK_FORM(dom_id, workspace_id, parent_id=None)">
+    <div id="${dom_id}" class="collapse">
+        <div class="pod-inline-form" >
+            <form role="form" method="POST" action="${tg.url('/workspaces/{}/folders/{}/tasks').format(workspace_id, parent_id)}">
+                <div class="form-group">
+                    <label for="thread-name">${_('Task')}</label>
+                    <input id="thread-name" class="form-control" name="label" type="text" placeholder="${_('...')}">
+                </div>
+                <div class="form-group">
+                    <label for="thread-message">${_('Detail')}</label>
+                    <textarea id="thread-message" class="form-control pod-rich-textarea" name="content" type="text" placeholder="${_('...')}"></textarea>
+                </div>
+                <span class="pull-right t-modal-form-submit-button">
+                    <button id="${dom_id}-submit-button" type="submit" class="btn btn-small btn-success" title="${_('Create this task')}"><i class=" fa fa-check"></i> ${_('Validate')}</button>
                 </span>
 
                 <div style="clear: both;"></div>

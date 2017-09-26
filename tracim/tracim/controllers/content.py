@@ -83,6 +83,41 @@ class UserWorkspaceFolderThreadCommentRestController(TIMRestController):
         tg.flash(_('Comment added'), CST.STATUS_OK)
         tg.redirect(next_url)
 
+
+class UserWorkspaceFolderTaskCommentRestController(TIMRestController):
+
+    @property
+    def _item_type(self):
+        return ContentType.Comment
+
+    @property
+    def _item_type_label(self):
+        return _('Comment')
+
+    def _before(self, *args, **kw):
+        TIMRestPathContextSetup.current_user()
+        TIMRestPathContextSetup.current_workspace()
+        TIMRestPathContextSetup.current_folder()
+        TIMRestPathContextSetup.current_task()
+
+    @tg.expose()
+    @tg.require(current_user_is_contributor())
+    def post(self, content: str = ''):
+        # TODO - SECURE THIS
+        workspace = tmpl_context.workspace
+        task = tmpl_context.task
+
+        api = ContentApi(tmpl_context.current_user)
+
+        comment = api.create_comment(workspace, task, content, True)
+        next_str = '/workspaces/{}/folders/{}/tasks/{}'
+        next_url = tg.url(next_str).format(tmpl_context.workspace_id,
+                                           tmpl_context.folder_id,
+                                           tmpl_context.task_id)
+        tg.flash(_('Comment added'), CST.STATUS_OK)
+        tg.redirect(next_url)
+
+
     @tg.expose()
     @tg.require(not_anonymous())
     def put_delete(self, item_id):
@@ -94,11 +129,11 @@ class UserWorkspaceFolderThreadCommentRestController(TIMRestController):
         item = content_api.get_one(item_id,
                                    self._item_type,
                                    tmpl_context.workspace)
-        next_or_back = '/workspaces/{}/folders/{}/threads/{}'
+        next_or_back = '/workspaces/{}/folders/{}/tasks/{}'
         try:
             next_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
                                                    tmpl_context.folder_id,
-                                                   tmpl_context.thread_id)
+                                                   tmpl_context.task_id)
             undo_str = '{}/comments/{}/put_delete_undo'
             undo_url = tg.url(undo_str).format(next_url,
                                                item_id)
@@ -116,7 +151,7 @@ class UserWorkspaceFolderThreadCommentRestController(TIMRestController):
         except ValueError as e:
             back_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
                                                    tmpl_context.folder_id,
-                                                   tmpl_context.thread_id)
+                                                   tmpl_context.task_id)
             msg = _('{} not deleted: {}').format(self._item_type_label, str(e))
             tg.flash(msg, CST.STATUS_ERROR)
             tg.redirect(back_url)
@@ -132,11 +167,11 @@ class UserWorkspaceFolderThreadCommentRestController(TIMRestController):
         item = content_api.get_one(item_id,
                                    self._item_type,
                                    tmpl_context.workspace)
-        next_or_back = '/workspaces/{}/folders/{}/threads/{}'
+        next_or_back = '/workspaces/{}/folders/{}/tasks/{}'
         try:
             next_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
                                                    tmpl_context.folder_id,
-                                                   tmpl_context.thread_id)
+                                                   tmpl_context.task_id)
             msg = _('{} undeleted.').format(self._item_type_label)
             with new_revision(item):
                 content_api.undelete(item)
@@ -149,7 +184,114 @@ class UserWorkspaceFolderThreadCommentRestController(TIMRestController):
             logger.debug(self, 'Exception: {}'.format(e.__str__))
             back_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
                                                    tmpl_context.folder_id,
-                                                   tmpl_context.thread_id)
+                                                   tmpl_context.task_id)
+            msg = _('{} not un-deleted: {}').format(self._item_type_label,
+                                                    str(e))
+            tg.flash(msg, CST.STATUS_ERROR)
+            tg.redirect(back_url)
+
+
+class UserWorkspaceFolderTicketCommentRestController(TIMRestController):
+
+    @property
+    def _item_type(self):
+        return ContentType.Comment
+
+    @property
+    def _item_type_label(self):
+        return _('Comment')
+
+    def _before(self, *args, **kw):
+        TIMRestPathContextSetup.current_user()
+        TIMRestPathContextSetup.current_workspace()
+        TIMRestPathContextSetup.current_folder()
+        TIMRestPathContextSetup.current_ticket()
+
+    @tg.expose()
+    @tg.require(current_user_is_contributor())
+    def post(self, content: str = ''):
+        # TODO - SECURE THIS
+        workspace = tmpl_context.workspace
+        task = tmpl_context.task
+
+        api = ContentApi(tmpl_context.current_user)
+
+        comment = api.create_comment(workspace, task, content, True)
+        next_str = '/workspaces/{}/folders/{}/tickets/{}'
+        next_url = tg.url(next_str).format(tmpl_context.workspace_id,
+                                           tmpl_context.folder_id,
+                                           tmpl_context.ticket_id)
+        tg.flash(_('Comment added'), CST.STATUS_OK)
+        tg.redirect(next_url)
+
+
+    @tg.expose()
+    @tg.require(not_anonymous())
+    def put_delete(self, item_id):
+        require_current_user_is_owner(int(item_id))
+
+        # TODO - CHECK RIGHTS
+        item_id = int(item_id)
+        content_api = ContentApi(tmpl_context.current_user)
+        item = content_api.get_one(item_id,
+                                   self._item_type,
+                                   tmpl_context.workspace)
+        next_or_back = '/workspaces/{}/folders/{}/tickets/{}'
+        try:
+            next_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
+                                                   tmpl_context.folder_id,
+                                                   tmpl_context.ticket_id)  # FIXME POC
+            undo_str = '{}/comments/{}/put_delete_undo'
+            undo_url = tg.url(undo_str).format(next_url,
+                                               item_id)
+            msg_str = ('{} deleted. '
+                       '<a class="alert-link" href="{}">Cancel action</a>')
+            msg = _(msg_str).format(self._item_type_label,
+                                    undo_url)
+            with new_revision(item):
+                content_api.delete(item)
+                content_api.save(item, ActionDescription.DELETION)
+
+            tg.flash(msg, CST.STATUS_OK, no_escape=True)
+            tg.redirect(next_url)
+
+        except ValueError as e:
+            back_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
+                                                   tmpl_context.folder_id,
+                                                   tmpl_context.ticket_id)  # FIXME POC
+            msg = _('{} not deleted: {}').format(self._item_type_label, str(e))
+            tg.flash(msg, CST.STATUS_ERROR)
+            tg.redirect(back_url)
+
+    @tg.expose()
+    @tg.require(not_anonymous())
+    def put_delete_undo(self, item_id):
+        require_current_user_is_owner(int(item_id))
+
+        item_id = int(item_id)
+        # Here we do not filter deleted items
+        content_api = ContentApi(tmpl_context.current_user, True, True)
+        item = content_api.get_one(item_id,
+                                   self._item_type,
+                                   tmpl_context.workspace)
+        next_or_back = '/workspaces/{}/folders/{}/tickets/{}'
+        try:
+            next_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
+                                                   tmpl_context.folder_id,
+                                                   tmpl_context.ticket_id)
+            msg = _('{} undeleted.').format(self._item_type_label)
+            with new_revision(item):
+                content_api.undelete(item)
+                content_api.save(item, ActionDescription.UNDELETION)
+
+            tg.flash(msg, CST.STATUS_OK)
+            tg.redirect(next_url)
+
+        except ValueError as e:
+            logger.debug(self, 'Exception: {}'.format(e.__str__))
+            back_url = tg.url(next_or_back).format(tmpl_context.workspace_id,
+                                                   tmpl_context.folder_id,
+                                                   tmpl_context.ticket_id)
             msg = _('{} not un-deleted: {}').format(self._item_type_label,
                                                     str(e))
             tg.flash(msg, CST.STATUS_ERROR)
@@ -748,6 +890,259 @@ class UserWorkspaceFolderThreadRestController(TIMWorkspaceContentRestController)
         )
 
 
+class UserWorkspaceFolderTaskRestController(TIMWorkspaceContentRestController):
+    """
+    manage a path like this: /workspaces/1/folders/XXX/pages/4
+    """
+
+    TEMPLATE_NEW = 'mako:tracim.templates.task.new'
+    TEMPLATE_EDIT = 'mako:tracim.templates.task.edit'
+
+    comments = UserWorkspaceFolderTaskCommentRestController()
+
+    def _before(self, *args, **kw):
+        TIMRestPathContextSetup.current_user()
+        TIMRestPathContextSetup.current_workspace()
+        TIMRestPathContextSetup.current_folder()
+
+    @property
+    def _std_url(self):
+        return tg.url('/workspaces/{}/folders/{}/tasks/{}')
+
+    @property
+    def _err_url(self):
+        return self._std_url
+
+    @property
+    def _parent_url(self):
+        return tg.url('/workspaces/{}/folders/{}')
+
+    @property
+    def _item_type(self):
+        return ContentType.Task
+
+    @property
+    def _item_type_label(self):
+        return _('Task')
+
+    @property
+    def _get_one_context(self) -> str:
+        return CTX.TASK
+
+    @property
+    def _get_all_context(self) -> str:
+        return CTX.TASKS
+
+    @tg.require(current_user_is_contributor())
+    @tg.expose()
+    def post(self, label='', content='', parent_id=None):
+        """
+        Creates a new thread. Actually, on POST, the content will be included
+        in a user comment instead of being the thread description
+        :param label:
+        :param content:
+        :return:
+        """
+        # TODO - SECURE THIS
+        workspace = tmpl_context.workspace
+
+        api = ContentApi(tmpl_context.current_user)
+
+        with DBSession.no_autoflush:
+            task = api.create(ContentType.Task,
+                                workspace,
+                                tmpl_context.folder,
+                                label)
+
+            task.description = content
+            if not self._path_validation.validate_new_content(task):
+                DBSession.rollback()
+                return render_invalid_integrity_chosen_path(
+                    task.get_label(),
+                )
+
+        # FIXME - DO NOT DUPLICATE FIRST MESSAGE
+        # thread.description = content
+        api.save(task, ActionDescription.CREATION)
+
+        tg.flash(_('Task created'), CST.STATUS_OK)
+        tg.redirect(self._std_url.format(tmpl_context.workspace_id,
+                                         tmpl_context.folder_id,
+                                         task.content_id))
+
+    @tg.require(current_user_is_reader())
+    @tg.expose('tracim.templates.task.getone')
+    def get_one(self, task_id, **kwargs):
+        """
+        :param task_id: content_id of Thread
+        :param inverted: fill with True equivalent to invert order of comments
+                         NOTE: This parameter is in kwargs because prevent URL
+                         changes.
+        """
+        inverted = kwargs.get('inverted')
+        task_id = int(task_id)
+        user = tmpl_context.current_user
+        workspace = tmpl_context.workspace
+
+        current_user_content = Context(CTX.CURRENT_USER).toDict(user)
+        current_user_content.roles.sort(key=lambda role: role.workspace.name)
+
+        content_api = ContentApi(
+            user,
+            show_deleted=True,
+            show_archived=True,
+        )
+        task = content_api.get_one(task_id, ContentType.Task, workspace)
+
+        fake_api_breadcrumb = self.get_breadcrumb(task_id)
+        fake_api_content = DictLikeClass(breadcrumb=fake_api_breadcrumb,
+                                         current_user=current_user_content)
+        fake_api = Context(CTX.FOLDER).toDict(fake_api_content)
+
+        dictified_task = Context(CTX.TASK).toDict(task, 'task')
+
+        if inverted:
+            dictified_task.task.history = \
+                reversed(dictified_task.task.history)
+
+        print(dictified_task)
+        return DictLikeClass(
+            result=dictified_task,
+            fake_api=fake_api,
+            inverted=inverted,
+        )
+
+
+class UserWorkspaceFolderTicketRestController(TIMWorkspaceContentRestController):
+    """
+    manage a path like this: /workspaces/1/folders/XXX/pages/4
+    """
+
+    TEMPLATE_NEW = 'mako:tracim.templates.ticket.new'
+    TEMPLATE_EDIT = 'mako:tracim.templates.ticket.edit'
+
+    UserWorkspaceFolderTaskCommentRestController
+    comments = UserWorkspaceFolderTicketCommentRestController()
+
+    def _before(self, *args, **kw):
+        TIMRestPathContextSetup.current_user()
+        TIMRestPathContextSetup.current_workspace()
+        TIMRestPathContextSetup.current_folder()
+
+    @property
+    def _std_url(self):
+        return tg.url('/workspaces/{}/folders/{}/tickets/{}')
+
+    @property
+    def _err_url(self):
+        return self._std_url
+
+    @property
+    def _parent_url(self):
+        return tg.url('/workspaces/{}/folders/{}')
+
+    @property
+    def _item_type(self):
+        return ContentType.Ticket
+
+    @property
+    def _item_type_label(self):
+        return _('Ticket')
+
+    @property
+    def _get_one_context(self) -> str:
+        return CTX.TICKET
+
+    @property
+    def _get_all_context(self) -> str:
+        return CTX.TICKETS
+
+    @tg.require(current_user_is_contributor())
+    @tg.expose()
+    def post(self, label='', content='', parent_id=None):
+        """
+        Creates a new thread. Actually, on POST, the content will be included
+        in a user comment instead of being the thread description
+        :param label:
+        :param content:
+        :return:
+        """
+        # TODO - SECURE THIS
+        workspace = tmpl_context.workspace
+
+        api = ContentApi(tmpl_context.current_user)
+
+        with DBSession.no_autoflush:
+            ticket = api.create(ContentType.Ticket,
+                                workspace,
+                                tmpl_context.folder,
+                                label)
+
+            ticket.description = content
+            if not self._path_validation.validate_new_content(ticket):
+                DBSession.rollback()
+                return render_invalid_integrity_chosen_path(
+                    ticket.get_label(),
+                )
+
+        # FIXME - DO NOT DUPLICATE FIRST MESSAGE
+        # thread.description = content
+        api.save(ticket, ActionDescription.CREATION)
+
+        tg.flash(_('Ticket created'), CST.STATUS_OK)
+        tg.redirect(
+            self._std_url.format(
+                tmpl_context.workspace_id,
+                tmpl_context.folder_id,
+                ticket.content_id
+            )
+        )
+
+    @tg.require(current_user_is_reader())
+    @tg.expose('tracim.templates.ticket.getone')
+    def get_one(self, ticket_id, **kwargs):
+        """
+        :param ticket_id: content_id of Thread
+        :param inverted: fill with True equivalent to invert order of comments
+                         NOTE: This parameter is in kwargs because prevent URL
+                         changes.
+        """
+        inverted = kwargs.get('inverted')
+        ticket_id = int(ticket_id)
+        user = tmpl_context.current_user
+        workspace = tmpl_context.workspace
+
+        current_user_content = Context(CTX.CURRENT_USER).toDict(user)
+        current_user_content.roles.sort(
+            key=lambda role: role.workspace.name)
+
+        content_api = ContentApi(
+            user,
+            show_deleted=True,
+            show_archived=True,
+        )
+        ticket = content_api.get_one(ticket_id, ContentType.Ticket,
+                                     workspace)
+
+        fake_api_breadcrumb = self.get_breadcrumb(ticket_id)
+        fake_api_content = DictLikeClass(breadcrumb=fake_api_breadcrumb,
+                                         current_user=current_user_content)
+        fake_api = Context(CTX.FOLDER).toDict(fake_api_content)
+
+        dictified_ticket = Context(CTX.TICKET).toDict(ticket, 'ticket')
+
+        if inverted:
+            dictified_ticket.ticket.history = \
+                reversed(dictified_ticket.ticket.history)
+
+        print(dictified_ticket)
+        return DictLikeClass(
+            result=dictified_ticket,
+            fake_api=fake_api,
+            inverted=inverted,
+        )
+
+
 class ItemLocationController(TIMWorkspaceContentRestController,
                              BaseController):
 
@@ -860,6 +1255,8 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
     files = UserWorkspaceFolderFileRestController()
     pages = UserWorkspaceFolderPageRestController()
     threads = UserWorkspaceFolderThreadRestController()
+    tasks = UserWorkspaceFolderTaskRestController()
+    tickets = UserWorkspaceFolderTicketRestController()
 
     def _before(self, *args, **kw):
         TIMRestPathContextSetup.current_user()
@@ -926,6 +1323,8 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
         fake_api_pages = self.pages.get_all_fake(workspace, folder).result
         fake_api_files = self.files.get_all_fake(workspace, folder).result
         fake_api_threads = self.threads.get_all_fake(workspace, folder).result
+        fake_api_tasks = self.tasks.get_all_fake(workspace, folder).result
+        fake_api_tickets = self.tickets.get_all_fake(workspace, folder).result
 
         fake_api_content = DictLikeClass(
             current_user=current_user_content,
@@ -934,6 +1333,8 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
             current_folder_pages=fake_api_pages,
             current_folder_files=fake_api_files,
             current_folder_threads=fake_api_threads,
+            current_folder_tasks=fake_api_tasks,
+            current_folder_tickets=fake_api_tickets,
         )
 
         fake_api = Context(CTX.FOLDER).toDict(fake_api_content)
@@ -945,9 +1346,12 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
                 ContentType.File,
                 ContentType.Page,
                 ContentType.Thread,
+                ContentType.Task,
+                ContentType.Ticket
             ],
 
         )
+        print(sub_items)
         fake_api.sub_items = Context(CTX.FOLDER_CONTENT_LIST).toDict(sub_items)
 
         fake_api.content_types = Context(CTX.DEFAULT).toDict(
@@ -991,7 +1395,9 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
              can_contain_folders=False,
              can_contain_threads=False,
              can_contain_files=False,
-             can_contain_pages=False):
+             can_contain_pages=False,
+             can_contain_tasks=False,
+             can_contain_tickets=False):
         # TODO - SECURE THIS
         workspace = tmpl_context.workspace
 
@@ -1017,7 +1423,9 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
                     folder=True if can_contain_folders == 'on' else False,
                     thread=True if can_contain_threads == 'on' else False,
                     file=True if can_contain_files == 'on' else False,
-                    page=True if can_contain_pages == 'on' else False
+                    page=True if can_contain_pages == 'on' else False,
+                    task=True if can_contain_tasks == 'on' else False,
+                    ticket=True if can_contain_tickets == 'on' else False
                 )
                 api.set_allowed_content(folder, subcontent)
 
@@ -1064,7 +1472,10 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
             can_contain_folders=False,
             can_contain_threads=False,
             can_contain_files=False,
-            can_contain_pages=False):
+            can_contain_pages=False,
+            can_contain_tickets=False,
+            can_contain_tasks=False
+            ):
         # TODO - SECURE THIS
         workspace = tmpl_context.workspace
 
@@ -1077,7 +1488,9 @@ class UserWorkspaceFolderRestController(TIMRestControllerWithBreadcrumb):
                 folder=True if can_contain_folders == 'on' else False,
                 thread=True if can_contain_threads == 'on' else False,
                 file=True if can_contain_files == 'on' else False,
-                page=True if can_contain_pages == 'on' else False
+                page=True if can_contain_pages == 'on' else False,
+                task=True if can_contain_tasks == 'on' else False,
+                ticket=True if can_contain_tickets == 'on' else False,
             )
             with new_revision(folder):
                 if label != folder.label:

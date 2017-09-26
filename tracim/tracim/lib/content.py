@@ -61,7 +61,14 @@ def compare_content_for_sorting_by_type_and_name(content1: Content,
         return 0
     else:
         # TODO - D.A. - 2014-12-02 - Manage Content Types Dynamically
-        content_type_order = [ContentType.Folder, ContentType.Page, ContentType.Thread, ContentType.File]
+        content_type_order = [
+            ContentType.Folder,
+            ContentType.Page,
+            ContentType.Thread,
+            ContentType.File,
+            ContentType.Task,
+            ContentType.Ticket,
+        ]
         result = content_type_order.index(content1.type)-content_type_order.index(content2.type)
         if result<0:
             return -1
@@ -85,6 +92,8 @@ class ContentApi(object):
         ContentType.Comment,
         ContentType.Thread,
         ContentType.Page,
+        ContentType.Task,
+        ContentType.Ticket
     )
 
     def __init__(
@@ -825,7 +834,9 @@ class ContentApi(object):
                 folder = True
                 thread = True,
                 file = False,
-                page = True
+                page = True,
+                task = True
+                ticket = True
             )
         :return:
         """

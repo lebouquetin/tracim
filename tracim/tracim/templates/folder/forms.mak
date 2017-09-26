@@ -22,7 +22,9 @@
                         <label><input id="content-folders" name="can_contain_folders" type="checkbox" checked> ${TIM.FA('fa-folder-open-o fa-fw t-folder-color')} ${_('sub-folders')}</label><br/>
                         <label><input id="content-threads" name="can_contain_threads" type="checkbox" checked> ${TIM.FA('fa-comments-o fa-fw t-thread-color')} ${_('threads')}</label><br/>
                         <label><input id="content-files" name="can_contain_files" type="checkbox" checked> ${TIM.FA('fa-paperclip fa-fw t-file-color')} ${_('files')}</label><br/>
-                        <label><input id="content-pages" name="can_contain_pages" type="checkbox" checked> ${TIM.FA('fa-file-text-o fa-fw t-page-color')} ${_('pages')}</label>
+                        <label><input id="content-pages" name="can_contain_pages" type="checkbox" checked> ${TIM.FA('fa-file-text-o fa-fw t-page-color')} ${_('pages')}</label><br/>
+                        <label><input id="content-tasks" name="can_contain_tasks" type="checkbox" checked> ${TIM.FA('fa-check-square fa-fw t-task-color')} ${_('tasks')}</label><br/>
+                        <label><input id="content-tickets" name="can_contain_tickets" type="checkbox" checked> ${TIM.FA('fa-ambulance fa-fw t-tickets-color')} ${_('tickets')}</label>
 ## FIXME - D.A. - 2015-05-25
 ## The help dialog is show below current dialog (so it is invisible)
 ##                         ${BUTTON.HELP_MODAL_DIALOG('content-wiki-page-definition', 'margin-left: 0.5em;')}

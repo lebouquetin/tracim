@@ -84,8 +84,12 @@ class CTX(object):
     PAGE = 'PAGE'
     PAGES = 'PAGES'
     SEARCH = 'SEARCH'
+    TASK = 'TASK'
+    TASKS = 'TASKS'
     THREAD = 'THREAD'
     THREADS = 'THREADS'
+    TICKET = 'TICKET'
+    TICKETS = 'TICKETS'
     USER = 'USER'
     USERS = 'USERS'
     WORKSPACE = 'WORKSPACE'
@@ -455,8 +459,10 @@ def serialize_content_for_history(event: VirtualEvent, context: Context):
     )
 
 @pod_serializer(Content, CTX.THREAD)
+@pod_serializer(Content, CTX.TICKET)
+@pod_serializer(Content, CTX.TASK)
 def serialize_node_for_thread(item: Content, context: Context):
-    if item.type==ContentType.Thread:
+    if item.type in (ContentType.Thread, ContentType.Task, ContentType.Ticket):
         return DictLikeClass(
             content = item.description,
             created = item.created,
@@ -485,7 +491,7 @@ def serialize_node_for_thread(item: Content, context: Context):
             }),
         )
 
-    if item.type==ContentType.Comment:
+    if item.type == ContentType.Comment:
         return DictLikeClass(
             is_new=item.has_new_information_for(context.get_user()),
             content = item.description,
@@ -525,12 +531,50 @@ def serialize_node_for_thread_list(content: Content, context: Context):
 
     raise NotImplementedError
 
+@pod_serializer(Content, CTX.TASKS)
+def serialize_node_for_task_list(content: Content, context: Context):
+    if content.type == ContentType.Task:
+        return DictLikeClass(
+            id = content.content_id,
+            url=ContentType.fill_url(content),
+            label=content.get_label(),
+            status=context.toDict(content.get_status()),
+            folder=context.toDict(content.parent),
+            workspace=context.toDict(content.workspace) if content.workspace else None,
+            comment_nb=len(content.get_comments())
+        )
+
+    if content.type == ContentType.Folder:
+        return Context(CTX.DEFAULT).toDict(content)
+
+    raise NotImplementedError
+
+
+@pod_serializer(Content, CTX.TICKETS)
+def serialize_node_for_thread_list(content: Content, context: Context):
+    if content.type == ContentType.Ticket:
+        return DictLikeClass(
+            id = content.content_id,
+            url=ContentType.fill_url(content),
+            label=content.get_label(),
+            status=context.toDict(content.get_status()),
+            folder=context.toDict(content.parent),
+            workspace=context.toDict(content.workspace) if content.workspace else None,
+            comment_nb=len(content.get_comments())
+        )
+
+    if content.type == ContentType.Folder:
+        return Context(CTX.DEFAULT).toDict(content)
+
+    raise NotImplementedError
+
+
 @pod_serializer(Content, CTX.WORKSPACE)
 @pod_serializer(Content, CTX.FOLDERS)
 def serialize_content_for_workspace(content: Content, context: Context):
-    thread_nb_all  = content.get_child_nb(ContentType.Thread)
+    thread_nb_all = content.get_child_nb(ContentType.Thread)
     thread_nb_open = content.get_child_nb(ContentType.Thread)
-    file_nb_all  = content.get_child_nb(ContentType.File)
+    file_nb_all = content.get_child_nb(ContentType.File)
     file_nb_open = content.get_child_nb(ContentType.File)
     folder_nb_all  = content.get_child_nb(ContentType.Folder)
     folder_nb_open = content.get_child_nb(ContentType.Folder)

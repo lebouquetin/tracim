@@ -264,8 +264,14 @@ th { text-align: center; }
 .t-folder-color { color: #CCCC00; }
 .t-folder-color-border, .page-header.t-folder-color-border  { border-color: #CCCC00; }
 
+.t-task-color { color: #979b20; }
+.t-task-color-border, .page-header.t-task-color-border  { border-color: #979b20; }
+
 .t-thread-color { color: #428BCA; }
 .t-thread-color-border, .page-header.t-thread-color-border  { border-color: #428BCA; }
+
+.t-ticket-color { color: #e70e0e; }
+.t-ticket-color-border, .page-header.t-ticket-color-border  { border-color: #e70e0e; }
 
 .t-file-color { color: orange;}
 .t-file-color-border, .page-header.t-file-color-border  { border-color: orange; }

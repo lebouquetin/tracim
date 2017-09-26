@@ -29,12 +29,14 @@
     ${TIM.MODAL_DIALOG('file-new-modal-dialog')}
     ${TIM.MODAL_DIALOG('page-new-modal-dialog')}
     ${TIM.MODAL_DIALOG('thread-new-modal-dialog')}
+    ${TIM.MODAL_DIALOG('task-new-modal-dialog')}
+    ${TIM.MODAL_DIALOG('ticket-new-modal-dialog')}
     ## TODO-DYNAMIC-CONTENT-HERE
 </%def>
 
 ############################################################################
 ##
-## PAGE CONTENT BELOW
+## FOLDER CONTENT BELOW
 ##
 ############################################################################
 
@@ -92,7 +94,7 @@
                             % endif
                             <ul class="dropdown-menu" role="menu">
                                 % for content_type in result.folder.allowed_content_types:
-                                    % if content_type.id != 'folder' or user_role > 2:
+                                    % if content_type != 'folder' or user_role > 2:
                                         ## Only show 'new folder' to content managers
                                         <%
                                             new_form_content_url = tg.url('/workspaces/{}/folders/{}/{}s/new'.format(result.folder.workspace.id, result.folder.id, content_type.id), params={'workspace_id': result.folder.workspace.id, 'parent_id': result.folder.id})
@@ -132,6 +134,12 @@
                 % endif
                 % if result.folder.allowed_content.thread:
                     ${FORMS.NEW_THREAD_FORM('thread-new', result.folder.workspace.id, result.folder.id)}
+                % endif
+                % if result.folder.allowed_content.task:
+                    ${FORMS.NEW_TASK_FORM('task-new', result.folder.workspace.id, result.folder.id)}
+                % endif
+                % if result.folder.allowed_content.ticket:
+                    ${FORMS.NEW_THREAD_FORM('ticket-new', result.folder.workspace.id, result.folder.id)}
                 % endif
                 % if result.folder.allowed_content.file:
                     ## FIXME${FORMS.NEW_FILE_FORM('file-new', result.folder.workspace.id, result.folder.id)}

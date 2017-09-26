@@ -99,6 +99,15 @@ class TIMRestPathContextSetup(object):
 
         return item
 
+    @classmethod
+    def current_task(cls) -> Content:
+        print('here')
+        task_id = int(tg.request.controller_state.routing_args.get('task_id'))
+        task = cls._current_item_manually(task_id, ContentType.Task)
+        tg.tmpl_context.task_id = task.content_id
+        tg.tmpl_context.task = task
+        print('task {}'.format(task_id))
+        return task
 
     @classmethod
     def current_thread(cls) -> Content:
@@ -108,6 +117,13 @@ class TIMRestPathContextSetup(object):
         tg.tmpl_context.thread = thread
         return thread
 
+    @classmethod
+    def current_ticket(cls) -> Content:
+        ticket_id = int(tg.request.controller_state.routing_args.get('ticket_id'))
+        ticket = cls._current_item_manually(ticket_id, ContentType.Ticket)
+        tg.tmpl_context.ticket_id = ticket.content_id
+        tg.tmpl_context.ticket = ticket
+        return ticket
 
     @classmethod
     def current_page(cls) -> Content:
@@ -148,6 +164,7 @@ class TIMRestController(RestController, BaseController):
 class TIMRestControllerWithBreadcrumb(TIMRestController):
 
     def get_breadcrumb(self, item_id=None) -> [BreadcrumbItem]:
+        return []  # FIXME - D.A. - 2017-09-26 - This code is useless
         """
         TODO - Remove this and factorize it with other get_breadcrumb_xxx methods
         :param item_id: an item id (item may be normal content or folder

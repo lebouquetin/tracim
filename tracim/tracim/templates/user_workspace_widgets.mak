@@ -184,6 +184,21 @@
     ${SHOW_CHANGE_STATUS(item, target_url, allow_status_change)}
 </%def>
 
+<%def name="SECURED_SHOW_CHANGE_STATUS_FOR_TASK(user, workspace, item)">
+    <% target_url = tg.url('/workspaces/{wid}/folders/{fid}/tasks/{pid}/put_status?status={{status_id}}').format(wid=item.workspace.id, fid=item.parent.id, pid=item.id) %>
+    <% allow_status_change = h.user_role(user, workspace)>=2 and item.selected_revision=='latest' %>
+    ## The user can't change status if he is a simple reader
+    ${SHOW_CHANGE_STATUS(item, target_url, allow_status_change)}
+</%def>
+
+<%def name="SECURED_SHOW_CHANGE_STATUS_FOR_TICKET(user, workspace, item)">
+    <% target_url = tg.url('/workspaces/{wid}/folders/{fid}/tickets/{pid}/put_status?status={{status_id}}').format(wid=item.workspace.id, fid=item.parent.id, pid=item.id) %>
+    <% allow_status_change = h.user_role(user, workspace)>=2 and item.selected_revision=='latest' %>
+    ## The user can't change status if he is a simple reader
+    ${SHOW_CHANGE_STATUS(item, target_url, allow_status_change)}
+</%def>
+
+
 <%def name="SHOW_CHANGE_STATUS(item, target_url, allow_to_change_status=False)">
     <div class="btn-group pull-right">
         % if not allow_to_change_status:

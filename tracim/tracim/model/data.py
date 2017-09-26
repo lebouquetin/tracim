@@ -39,6 +39,8 @@ DEFAULT_PROPERTIES = dict(
         file=True,
         page=True,
         thread=True,
+        task=True,
+        ticket=True
     ),
 )
 
@@ -340,6 +342,8 @@ class ContentType(object):
     Thread = 'thread'
     Page = 'page'
     Event = 'event'
+    Task = 'task'
+    Ticket = 'ticket'
 
     # Fake types, used for breadcrumb only
     FAKE_Dashboard = 'dashboard'
@@ -353,7 +357,9 @@ class ContentType(object):
         'folder': 'fa fa-folder-open-o',
         'file': 'fa fa-paperclip',
         'page': 'fa fa-file-text-o',
+        'task': 'fa fa-comments-o',
         'thread': 'fa fa-comments-o',
+        'ticket': 'fa fa-ambulance',
         'comment': 'fa fa-comment-o',
         'event': 'fa fa-calendar-o',
     }
@@ -364,7 +370,9 @@ class ContentType(object):
         'folder': 'fa fa-folder-open-o',
         'file': 'fa fa-paperclip',
         'page': 'fa fa-file-text-o',
+        'task': 'fa fa-check-square',
         'thread': 'fa fa-comments-o',
+        'ticket': 'fa fa-ambulance',
         'comment': 'fa fa-comment-o',
         'event': 'fa fa-calendar-o',
     }
@@ -375,7 +383,9 @@ class ContentType(object):
         'folder': 't-folder-color',
         'file': 't-file-color',
         'page': 't-page-color',
+        'task': 't-task-color',
         'thread': 't-thread-color',
+        'ticket': 't-ticket-color',
         'comment': 't-thread-color',
         'event': 't-event-color',
     }
@@ -384,6 +394,8 @@ class ContentType(object):
         'folder': 0,
         'page': 1,
         'thread': 2,
+        'task': 6,
+        'ticket': 7,
         'file': 3,
         'comment': 4,
         'event': 5,
@@ -395,7 +407,9 @@ class ContentType(object):
         'folder': l_('folder'),
         'file': l_('file'),
         'page': l_('page'),
+        'task': l_('task'),
         'thread': l_('thread'),
+        'ticket': l_('ticket'),
         'comment': l_('comment'),
         'event': l_('event'),
     }
@@ -406,7 +420,9 @@ class ContentType(object):
         'folder': l_('Delete this folder'),
         'file': l_('Delete this file'),
         'page': l_('Delete this page'),
+        'task': l_('Delete this task'),
         'thread': l_('Delete this thread'),
+        'ticket': l_('Delete this ticket'),
         'comment': l_('Delete this comment'),
         'event': l_('Delete this event'),
     }
@@ -423,12 +439,12 @@ class ContentType(object):
     @classmethod
     def allowed_types(cls):
         return [cls.Folder, cls.File, cls.Comment, cls.Thread, cls.Page,
-                cls.Event]
+                cls.Event, cls.Task, cls.Ticket]
 
     @classmethod
     def allowed_types_for_folding(cls):
         # This method is used for showing only "main" types in the left-side treeview
-        return [cls.Folder, cls.File, cls.Thread, cls.Page]
+        return [cls.Folder, cls.File, cls.Thread, cls.Page, cls.Ticket, cls.Task]
 
     @classmethod
     def allowed_types_from_str(cls, allowed_types_as_string: str):
@@ -450,6 +466,10 @@ class ContentType(object):
             return '/workspaces/{}/folders/{}/files/{}'.format(content.workspace_id, content.parent_id, content.content_id)
         elif content.type==ContentType.Thread:
             return '/workspaces/{}/folders/{}/threads/{}'.format(content.workspace_id, content.parent_id, content.content_id)
+        elif content.type == ContentType.Ticket:
+            return '/workspaces/{}/folders/{}/tickets/{}'.format(content.workspace_id, content.parent_id, content.content_id)
+        elif content.type == ContentType.Task:
+            return '/workspaces/{}/folders/{}/tasks/{}'.format(content.workspace_id, content.parent_id, content.content_id)
         elif content.type==ContentType.Page:
             return '/workspaces/{}/folders/{}/pages/{}'.format(content.workspace_id, content.parent_id, content.content_id)
 
@@ -498,7 +518,11 @@ class ContentChecker(object):
                 return False
             if 'pages' not in properties['allowed_content']:
                 return False
+            if 'tasks' not in properties['allowed_content']:
+                return False
             if 'threads' not in properties['allowed_content']:
+                return False
+            if 'tickets' not in properties['allowed_content']:
                 return False
             return True
 
@@ -1103,7 +1127,12 @@ class Content(DeclarativeBase):
         """ return a structure decoded from json content of _properties """
         if not self._properties:
             return DEFAULT_PROPERTIES
-        return json.loads(self._properties)
+        # FIXME HACK - D.A. - 2017-09-26
+        prop_dict = json.loads(self._properties)
+        for key in DEFAULT_PROPERTIES['allowed_content'].keys():
+            if key not in prop_dict['allowed_content'].keys():
+                prop_dict['allowed_content'][key] = DEFAULT_PROPERTIES['allowed_content'][key]
+        return prop_dict  # FIXME
 
     @properties.setter
     def properties(self, properties_struct: dict) -> None:

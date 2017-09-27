@@ -622,6 +622,10 @@ def serialize_content_for_workspace(content: Content, context: Context):
 def serialize_content_for_workspace_and_folder(content: Content, context: Context):
     thread_nb_all  = content.get_child_nb(ContentType.Thread)
     thread_nb_open = content.get_child_nb(ContentType.Thread)
+    ticket_nb_all  = content.get_child_nb(ContentType.Ticket)
+    ticket_nb_open = content.get_child_nb(ContentType.Ticket)
+    task_nb_all  = content.get_child_nb(ContentType.Task)
+    task_nb_open = content.get_child_nb(ContentType.Task)
     file_nb_all  = content.get_child_nb(ContentType.File)
     file_nb_open = content.get_child_nb(ContentType.File)
     folder_nb_all  = content.get_child_nb(ContentType.Folder)
@@ -664,6 +668,10 @@ def serialize_content_for_workspace_and_folder(content: Content, context: Contex
                                     open=folder_nb_open),
             page_nb=DictLikeClass(all=page_nb_all,
                                   open=page_nb_open),
+            task_nb=DictLikeClass(all=task_nb_all,
+                                  open=task_nb_open),
+            ticket_nb=DictLikeClass(all=ticket_nb_all,
+                                  open=ticket_nb_open),
             content_nb=DictLikeClass(all = content_nb_all),
             is_archived=content.is_archived,
             is_deleted=content.is_deleted,
@@ -771,6 +779,18 @@ def serialize_content_for_folder_content_list(content: Content, context: Context
             item.notes += _('1 open thread<br/>\n')
         elif thread_nb > 1:
             item.notes += _('{} open threads<br/>').format(thread_nb)
+
+        task_nb = content.get_child_nb(ContentType.Task, ContentStatus.OPEN)
+        if task_nb == 1:
+            item.notes += _('1 open task<br/>\n')
+        elif task_nb > 1:
+            item.notes += _('{} open tasks<br/>').format(task_nb)
+
+        ticket_nb = content.get_child_nb(ContentType.Ticket, ContentStatus.OPEN)
+        if ticket_nb == 1:
+            item.notes += _('1 open ticket<br/>\n')
+        elif ticket_nb > 1:
+            item.notes += _('{} open tickets<br/>').format(ticket_nb)
 
         page_nb = content.get_child_nb(ContentType.Page, ContentStatus.OPEN)
         if page_nb == 1:

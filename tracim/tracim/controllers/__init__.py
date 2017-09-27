@@ -335,8 +335,10 @@ class TIMWorkspaceContentRestController(TIMRestControllerWithBreadcrumb):
     def put_status(self, item_id, status):
         item_id = int(item_id)
         content_api = ContentApi(tmpl_context.current_user)
-        item = content_api.get_one(item_id, self._item_type, tmpl_context.workspace)
+
         try:
+            item = content_api.get_one(item_id, self._item_type,
+                                       tmpl_context.workspace)
             with new_revision(item):
                 content_api.set_status(item, status)
                 content_api.save(item, ActionDescription.STATUS_UPDATE)
@@ -347,7 +349,28 @@ class TIMWorkspaceContentRestController(TIMRestControllerWithBreadcrumb):
             msg = _('{} status not updated: {}').format(self._item_type_label, str(e))
             tg.flash(msg, CST.STATUS_ERROR)
             tg.redirect(self._err_url.format(item.workspace_id, item.parent_id, item.content_id))
+        except NoResultFound as e:
+            # probably the content is deleted or archived => forbidden to update status
+            content_api = ContentApi(
+                tmpl_context.current_user,
+                show_archived=True,
+                show_deleted=True
+            )
+            item = content_api.get_one(
+                item_id,
+                self._item_type,
+                tmpl_context.workspace
+            )
 
+            next_url = self._std_url.format(
+                item.workspace_id, item.parent_id, item.content_id
+            )
+            msg = _('{} status not updated: the operation '
+                    'is not allowed on deleted/archived content').format(
+                self._item_type_label
+            )
+            tg.flash(msg, CST.STATUS_ERROR)
+            tg.redirect(next_url)
 
     def get_all_fake(self, context_workspace: Workspace, context_folder: Content) -> [Content]:
         """

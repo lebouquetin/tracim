@@ -185,10 +185,20 @@
                 $('#toggle-file-visibility').toggleClass('t-active-color');
                 $('#toggle-file-visibility').toggleClass('t-inactive-color');
             });
+            $("#toggle-task-visibility").click(function() {
+                $('.t-table-row-task').toggle();
+                $('#toggle-task-visibility').toggleClass('t-active-color');
+                $('#toggle-task-visibility').toggleClass('t-inactive-color');
+            });
             $("#toggle-thread-visibility").click(function() {
                 $('.t-table-row-thread').toggle();
                 $('#toggle-thread-visibility').toggleClass('t-active-color');
                 $('#toggle-thread-visibility').toggleClass('t-inactive-color');
+            });
+            $("#toggle-ticket-visibility").click(function() {
+                $('.t-table-row-ticket').toggle();
+                $('#toggle-ticket-visibility').toggleClass('t-active-color');
+                $('#toggle-ticket-visibility').toggleClass('t-inactive-color');
             });
             $("#toggle-folder-visibility").click(function() {
                 $('.t-table-row-folder').toggle();

@@ -212,11 +212,11 @@ class UserWorkspaceFolderTicketCommentRestController(TIMRestController):
     def post(self, content: str = ''):
         # TODO - SECURE THIS
         workspace = tmpl_context.workspace
-        task = tmpl_context.task
+        ticket = tmpl_context.ticket
 
         api = ContentApi(tmpl_context.current_user)
 
-        comment = api.create_comment(workspace, task, content, True)
+        comment = api.create_comment(workspace, ticket, content, True)
         next_str = '/workspaces/{}/folders/{}/tickets/{}'
         next_url = tg.url(next_str).format(tmpl_context.workspace_id,
                                            tmpl_context.folder_id,

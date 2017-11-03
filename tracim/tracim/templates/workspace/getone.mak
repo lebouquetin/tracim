@@ -77,9 +77,9 @@
     % else:
         <p>
             % if member_nb == 1:
-                ${_('This workspace has {a_open}one member{a_close}').format(a_open='<a data-toggle="collapse" href="#memberList" aria-expanded="false" aria-controls="memberList">', a_close='</a>')|n}
+                ${_('This workspace has {a_open}one member{a_close}').format(a_open='<a class="btn-link" data-toggle="collapse" href="#memberList" aria-expanded="false" aria-controls="memberList">', a_close='</a>')|n}
             % else:
-                ${_('This workspace has {a_open}{member_nb} members{a_close}').format(a_open='<a data-toggle="collapse" href="#memberList" aria-expanded="false" aria-controls="memberList">', member_nb=member_nb, a_close='</a>')|n}
+                ${_('This workspace has {a_open}{member_nb} members{a_close}').format(a_open='<a class="btn-link" data-toggle="collapse" href="#memberList" aria-expanded="false" aria-controls="memberList">', member_nb=member_nb, a_close='</a>')|n}
                 % if viewable_member_nb != member_nb:
                     <span id="members-whose" style="display: none;">${ _('whose') }:</span>
                 % endif
@@ -112,7 +112,7 @@
 
     % if result.workspace.calendar_enabled:
         <p>
-            ${_('This workspace has {a_open}an associated calendar{a_close}').format(a_open='<a data-toggle="collapse" href="#calendarConfig" aria-expanded="false" aria-controls="calendarConfig">', a_close='</a>')|n}
+            ${_('This workspace has {a_open}an associated calendar{a_close}').format(a_open='<a class="btn-link" data-toggle="collapse" href="#calendarConfig" aria-expanded="false" aria-controls="calendarConfig">', a_close='</a>')|n}
         </p>
         <div class="collapse" id="calendarConfig">
             <p>${_('You can access the calendar using your own software: Outlook, Thunderbird, etc.')}</p>
@@ -122,19 +122,19 @@
     % endif
 
     <p>
-        ${_('You can browse the content of this workspace {a_open}in your file explorer (webdav){a_close}').format(a_open='<a data-toggle="collapse" href="#webdavConfig" aria-expanded="false" aria-controls="webdavConfig">', a_close='</a>')|n}
+        ${_('You can browse the content of this workspace {a_open}in your file explorer (webdav){a_close}').format(a_open='<a class="btn-link" data-toggle="collapse" href="#webdavConfig" aria-expanded="false" aria-controls="webdavConfig">', a_close='</a>')|n}
     </p>
     <div class="collapse" id="webdavConfig">
         <div class="row">
             <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-addon" style="width: 8em;"><i class="fa fa-fw fa-windows"></i> Windows</span>
-                    <input class="form-control webdavconfig__input" value="http://${webdav_url}" readonly />
+                    <div class="form-control webdavconfig__input">http://${webdav_url}</div>
                 </div>
                 <p></p>
                 <div class="input-group">
                     <span class="input-group-addon" style="width: 8em;"><i class="fa fa-fw fa-linux"></i> Linux</span>
-                    <input class="form-control webdavconfig__input" value="dav://${webdav_url}" readonly />
+                    <div class="form-control webdavconfig__input">dav://${webdav_url}</div>
                 </div>
             </div>
             <div class="col-md-6">
@@ -193,23 +193,18 @@
                     % endif
                 </div>
                 <div class="col-md-8 text-right">
-                    % if len(fake_api.sub_items) > 0:
-                        ## INFO - D.A. - 2015-05-25
-                        ## We hide filtering/search buttons if no content yet.
-                        ## This make the interface more easy to use
-                        <div class="btn-group" role="group" aria-label="...">
-                            ${BUTTON.TEXT('', 'btn btn-default disabled', _('hide...'))}
-                            % for content_type in result.workspace.allowed_content_types:
-                                ${BUTTON.TEXT('toggle-{type}-visibility'.format(type=content_type.id), 'btn btn-default t-active-color disabled-has-priority', content_type.label)}
-                            % endfor
-                        </div>
-                        <p></p>
-                        ${UI.GENERIC_DISPLAY_VIEW_BUTTONS_CONTAINER(tg.url('/workspaces/{}'.format(result.workspace.id)))}
-                        <p></p>
-                        <div class="btn-group pull-right" role="group" aria-label="...">
-                            <input id="filtering"  type="text" class="form-control t-bg-grey" placeholder="${_('filter...')}" aria-describedby="basic-addon1">
-                        </div>
-                    % endif
+                    <div class="btn-group" role="group" aria-label="...">
+                        ${BUTTON.TEXT('', 'btn btn-default disabled', _('hide...'))}
+                        % for content_type in result.workspace.allowed_content_types:
+                            ${BUTTON.TEXT('toggle-{type}-visibility'.format(type=content_type.id), 'btn btn-default t-active-color disabled-has-priority', content_type.label)}
+                        % endfor
+                    </div>
+                    <p></p>
+                    ${UI.GENERIC_DISPLAY_VIEW_BUTTONS_CONTAINER(tg.url('/workspaces/{}'.format(result.workspace.id)))}
+                    <p></p>
+                    <div class="btn-group pull-right" role="group" aria-label="...">
+                        <input id="filtering"  type="text" class="form-control t-bg-grey" placeholder="${_('filter...')}" aria-describedby="basic-addon1">
+                    </div>
                 </div>
 
 
